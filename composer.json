@@ -1,0 +1,22 @@
+{
+  "name": "halitools/micro-command",
+  "description": "Send requests for not installed modules",
+  "keywords": ["requests", "microservices"],
+  "type": "project",
+  "require": {
+    "php": ">=7.1.0",
+    "guzzlehttp/guzzle": "~6.0",
+    "psr/http-message": "*",
+    "psr/container": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Halitools\\MicroCommand\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
+  }
+}
