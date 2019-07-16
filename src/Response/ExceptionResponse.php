@@ -1,107 +1,66 @@
 <?php
 
-
 namespace Halitools\MicroCommand\Response;
 
+use Halitools\MicroCommand\Exceptions\RemoteException;
 
-class ExceptionResponse
+class ExceptionResponse implements ExceptionResponseInterface
 {
 
-    /**
-     * @var string
-     */
-    protected $exception;
-
-    /** @var
-     * string
-     */
-    protected $message;
-
-    /**
-     * @var int
-     */
-    protected $code;
-
-    /**
-     * @var string
-     */
-    protected $file;
-
-    /**
-     * @var string
-     */
-    protected $line;
-
-    /**
-     * @var array
-     */
-    protected $trace;
+    protected $data = [];
 
     /**
      * ExceptionResponse constructor.
-     * @param string $exception
-     * @param $message
-     * @param int $code
-     * @param string $file
-     * @param string $line
-     * @param array $trace
+     * @param array $data
      */
-    public function __construct(string $exception, $message, $code, string $file, string $line, array $trace)
+    public function __construct(array $data)
     {
-        $this->exception = $exception;
-        $this->message = $message;
-        $this->code = $code;
-        $this->file = $file;
-        $this->line = $line;
-        $this->trace = $trace;
+        $this->data = $data;
+    }
+
+    public static function build(\Exception $exception): ExceptionResponseInterface
+    {
+        return new static([
+            'exception' => get_class($exception),
+            'message' => $exception->getMessage(),
+            'code' => $exception->getCode(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => self::traceToArray($exception)
+        ]);
     }
 
     /**
-     * @return string
-     */
-    public function getException(): string
-    {
-        return $this->exception;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getMessage()
-    {
-        return $this->message;
-    }
-
-    /**
-     * @return int
-     */
-    public function getCode(): int
-    {
-        return $this->code;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFile(): string
-    {
-        return $this->file;
-    }
-
-    /**
-     * @return string
-     */
-    public function getLine(): string
-    {
-        return $this->line;
-    }
-
-    /**
+     * @param \Exception $exception
      * @return array
      */
-    public function getTrace(): array
+    protected static function traceToArray(\Exception $exception): array
     {
-        return $this->trace;
+        $trace = [];
+        foreach ($exception->getTrace() as $item) {
+            unset($item['args']);
+            $trace[] = $item;
+        }
+        return $trace;
+    }
+
+    /**
+     * @throws RemoteException
+     */
+    public function throw()
+    {
+        throw $this->getException();
+    }
+
+    public function getException()
+    {
+        $message = sprintf('%s in %s (line %d): %s',
+            $this->data['exception'],
+            $this->data['file'],
+            $this->data['line'],
+            $this->data['message']
+        );
+        return new RemoteException($message, $this->data['code']);
     }
 
 }

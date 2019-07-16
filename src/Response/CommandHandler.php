@@ -14,13 +14,18 @@ class CommandHandler
     /** @var ContainerInterface */
     private $container;
 
+    /** @var ExceptionResponseFactory */
+    private $exceptionFactory;
+
     /**
      * CommandHandler constructor.
      * @param ContainerInterface $container
+     * @param ExceptionResponseFactory $exceptionFactory
      */
-    public function __construct(ContainerInterface $container)
+    public function __construct(ContainerInterface $container, ExceptionResponseFactory $exceptionFactory)
     {
         $this->container = $container;
+        $this->exceptionFactory = $exceptionFactory;
     }
 
     /**
@@ -37,7 +42,7 @@ class CommandHandler
         try {
             $response = $this->handleCommand($command);
         } catch (Exception $exception) {
-            $response = ExceptionResponseFactory::make($exception);
+            $response = $this->exceptionFactory->make($exception);
         }
         return base64_encode(serialize($response));
     }
@@ -51,4 +56,6 @@ class CommandHandler
         $instance = $this->container->get($command->getInterface());
         return call_user_func_array([$instance, $command->getMethod()], $command->getArguments());
     }
+
+
 }

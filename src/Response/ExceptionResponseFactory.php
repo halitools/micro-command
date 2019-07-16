@@ -7,26 +7,32 @@ namespace Halitools\MicroCommand\Response;
 class ExceptionResponseFactory
 {
 
-    public static function make(\Exception $exception): ExceptionResponse
+    protected $customErrors = [];
+
+    public function make(\Exception $exception): ExceptionResponseInterface
     {
-        $trace = [];
-        foreach ($exception->getTrace() as $item) {
-            unset($item['args']);
-            $trace[] = $item;
+        $exceptionClass = get_class($exception);
+        if (!empty($this->customErrors[$exceptionClass])) {
+            return $this->customErrors[$exceptionClass]::build($exception);
         }
-        return new ExceptionResponse(
-            get_class($exception),
-            self::createMessage($exception),
-            $exception->getCode(),
-            $exception->getFile(),
-            $exception->getLine(),
-            $trace
-        );
+        return ExceptionResponse::build($exception);
     }
 
-    private static function createMessage(\Exception $exception): string
+    /**
+     * @param array $customErrors
+     */
+    public function setCustomErrors(array $customErrors)
     {
-        return get_class($exception) . ' in ' . $exception->getFile() . ' (line ' . $exception->getLine() .'): ' .  $exception->getMessage();
+        $this->customErrors = $customErrors;
     }
 
+    /**
+     * Register a new custom exception response. This must implement the
+     * @param string $exceptionClass
+     * @param string $responseClass
+     */
+    public function addCustomError(string $exceptionClass, string $responseClass)
+    {
+        $this->customErrors[$exceptionClass] = $responseClass;
+    }
 }

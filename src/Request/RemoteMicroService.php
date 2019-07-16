@@ -2,23 +2,24 @@
 
 namespace Halitools\MicroCommand\Request;
 
-use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
 use Halitools\MicroCommand\Exceptions\RemoteException;
 use Halitools\MicroCommand\Exceptions\UnserializeResponseException;
 use Halitools\MicroCommand\Response\ExceptionResponse;
+use Halitools\MicroCommand\Response\ExceptionResponseInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
 
 class RemoteMicroService extends MicroService
 {
     /**
-     * @var ClientInterface
+     * @var Client
      */
     protected $client;
 
     /**
-     * @var UriInterface
+     * @var Uri
      */
     private $uri;
 
@@ -26,10 +27,10 @@ class RemoteMicroService extends MicroService
 
     /**
      * RemoteMicroService constructor.
-     * @param ClientInterface $client
-     * @param UriInterface $uri
+     * @param Client $client
+     * @param Uri $uri
      */
-    public function __construct(ClientInterface $client, UriInterface $uri)
+    public function __construct(Client $client, Uri $uri)
     {
         $this->client = $client;
         $this->uri = $uri;
@@ -45,8 +46,26 @@ class RemoteMicroService extends MicroService
     }
 
     /**
+     * @param Client $client
+     */
+    public function setClient(Client $client)
+    {
+        $this->client = $client;
+    }
+
+    /**
+     * @param Uri $uri
+     */
+    public function setUri(Uri $uri)
+    {
+        $this->uri = $uri;
+    }
+
+    /**
      * @param ResponseInterface $response
      * @return mixed
+     * @throws RemoteException
+     * @throws UnserializeResponseException
      */
     public function handleResponse(ResponseInterface $response)
     {
@@ -56,10 +75,10 @@ class RemoteMicroService extends MicroService
         } catch (\ErrorException $exception) {
             throw new UnserializeResponseException($content);
         }
-        if (is_a($response, ExceptionResponse::class)) {
-            /** @var ExceptionResponse $response */
+        if ($response instanceof ExceptionResponseInterface) {
+            /** @var ExceptionResponseInterface $response */
             /** @var RemoteException $remoteException */
-            throw new $this->remoteException($response->getMessage(), $response->getCode());
+            $response->throw();
         }
         return $response;
     }
