@@ -8,6 +8,8 @@ use Halitools\MicroCommand\Exceptions\ImplementationNotFoundException;
 abstract class MicroService
 {
 
+    protected $name;
+
     /**
      * @var array
      */
@@ -107,5 +109,9 @@ abstract class MicroService
         throw new ImplementationNotFoundException('No implementation found for ' . $key);
     }
 
+    public function getName(): string
+    {
+        return $this->name ?? (defined('static::NAME') ? $this::NAME : '');
+    }
 
 }
